@@ -1,0 +1,69 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: apps
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: message-queue-app
+  namespace: apps
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: message-queue-app
+  template:
+    metadata:
+      labels:
+        app: message-queue-app
+    spec:
+      containers:
+        - name: message-queue-app
+          image: sattfatt/message-queue:v1.0
+          ports:
+            - containerPort: 8080 
+      imagePullSecrets:
+        - name: regcred
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: message-queue-app-service
+  namespace: apps
+spec:
+  selector:
+    app: message-queue-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080 
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: message-queue-app-ingress
+  namespace: apps
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - messaging-queue.satyam.cloud
+      secretName: message-queue-app-tls
+  rules:
+    - host: messaging-queue.satyam.cloud
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: message-queue-app-service
+                port:
+                  number: 80
+---
+

@@ -18,6 +18,7 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.GET("/ws/:source_id", handleWebsocket)
+	e.GET("/", about)
 	e.Logger.Fatal(e.Start(":8080"))
 }
 
@@ -28,6 +29,11 @@ var upgrader = websocket.Upgrader{
 }
 
 var queueProvider = redisimpl.NewClient("redis:6379")
+
+func about(c echo.Context) error {
+	c.String(200, "message-queue server")
+	return nil
+}
 
 func handleWebsocket(c echo.Context) error {
 	conn, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
