@@ -152,5 +152,6 @@ func IgnoreCloseErr(err error) bool {
 		websocket.CloseNormalClosure,
 		websocket.CloseAbnormalClosure,
 		websocket.CloseGoingAway,
+		websocket.CloseNoStatusReceived,
 	)
 }
