@@ -78,6 +78,9 @@ func socketReadLoop(
 
 			var message Message
 			err := conn.ReadJSON(&message)
+			if IgnoreCloseErr(err) {
+				return
+			}
 			if err != nil {
 				log.Println("websocket read error:", err)
 				break
@@ -121,6 +124,9 @@ func queueReadLoop(ctx context.Context, conn *websocket.Conn, q queue.Queue[Mess
 			log.Println("queue:", m)
 
 			err = conn.WriteJSON(m)
+			if IgnoreCloseErr(err) {
+				return
+			}
 			if err != nil {
 				log.Println("could not write to socket:", err)
 				return
@@ -138,4 +144,8 @@ func throttleLog(count int, loggables ...interface{}) int {
 	}
 
 	return count
+}
+
+func IgnoreCloseErr(err error) bool {
+	return websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseAbnormalClosure)
 }
