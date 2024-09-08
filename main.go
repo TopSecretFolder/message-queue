@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	redisimpl "github.com/TopSecretFolder/message-queue/internal/redis_impl"
 	"github.com/TopSecretFolder/message-queue/shared/queue"
@@ -29,7 +30,7 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-var queueProvider = redisimpl.NewClient(os.Getenv("REDIS_URL"))
+var queueProvider = redisimpl.NewClient(context.Background(), os.Getenv("REDIS_URL"), time.Minute*10)
 
 func about(c echo.Context) error {
 	c.String(200, "message-queue server")
