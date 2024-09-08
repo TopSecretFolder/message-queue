@@ -147,5 +147,10 @@ func throttleLog(count int, loggables ...interface{}) int {
 }
 
 func IgnoreCloseErr(err error) bool {
-	return websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseAbnormalClosure)
+	return websocket.IsCloseError(
+		err,
+		websocket.CloseNormalClosure,
+		websocket.CloseAbnormalClosure,
+		websocket.CloseGoingAway,
+	)
 }
