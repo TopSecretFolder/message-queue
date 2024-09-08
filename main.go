@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	redisimpl "github.com/TopSecretFolder/message-queue/internal/redis_impl"
 	"github.com/TopSecretFolder/message-queue/shared/queue"
@@ -28,7 +29,7 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-var queueProvider = redisimpl.NewClient("redis:6379")
+var queueProvider = redisimpl.NewClient(os.Getenv("REDIS_URL"))
 
 func about(c echo.Context) error {
 	c.String(200, "message-queue server")
@@ -38,6 +39,7 @@ func about(c echo.Context) error {
 func handleWebsocket(c echo.Context) error {
 	conn, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 	if err != nil {
+		log.Println("error upgrading websocket connection:", err)
 		return err
 	}
 	defer conn.Close()
@@ -58,7 +60,7 @@ func handleWebsocket(c echo.Context) error {
 type Message struct {
 	SourceID string `json:"source_id"`
 	TargetID string `json:"target_id"`
-	Data     string `json:"Data"`
+	Data     string `json:"data"`
 }
 
 func socketReadLoop(
@@ -89,6 +91,8 @@ func socketReadLoop(
 
 func OnSocketMessage(m Message) {
 
+	log.Println("socket:", m)
+
 	q := queue.Instance[Message](queue.GetKey(m.TargetID), queueProvider)
 
 	err := q.Enqueue(m)
@@ -113,6 +117,8 @@ func queueReadLoop(ctx context.Context, conn *websocket.Conn, q queue.Queue[Mess
 				log.Println("could not dequeue from the queue provider:", err)
 				break
 			}
+
+			log.Println("queue:", m)
 
 			err = conn.WriteJSON(m)
 			if err != nil {

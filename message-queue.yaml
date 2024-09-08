@@ -10,7 +10,7 @@ metadata:
   name: message-queue-app
   namespace: apps
 spec:
-  replicas: 4
+  replicas: 1
   selector:
     matchLabels:
       app: message-queue-app
@@ -21,9 +21,12 @@ spec:
     spec:
       containers:
         - name: message-queue-app
-          image: sattfatt/message-queue:v1.0
+          image: sattfatt/message-queue:v1.6
           ports:
             - containerPort: 8080 
+          env:
+          - name: REDIS_URL
+            value: "redis.redis-namespace.svc.cluster.local:6379"
       imagePullSecrets:
         - name: regcred
 ---
@@ -47,15 +50,20 @@ metadata:
   namespace: apps
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "300"
+    nginx.ingress.kubernetes.io/websocket-services: "your-app-service"
+    nginx.ingress.kubernetes.io/upstream-hash-by: "$remote_addr"
 
 spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - messaging-queue.satyam.cloud
+        - message-queue.satyam.cloud
       secretName: message-queue-app-tls
   rules:
-    - host: messaging-queue.satyam.cloud
+    - host: message-queue.satyam.cloud
       http:
         paths:
           - path: /
